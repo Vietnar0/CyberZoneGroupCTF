@@ -1,0 +1,127 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberSec CTF Challenge - 2025</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/challenge-board.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a192f, #1a2a44);
+      color: #e0e7ff;
+      font-family: 'Arial', sans-serif;
+    }
+    .neon-text {
+      text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc, 0 0 30px #00ffcc;
+    }
+    .card {
+      background: rgba(26, 42, 68, 0.9);
+      border: 1px solid #00ffcc;
+      backdrop-filter: blur(5px);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+  <header class="text-center mb-10">
+    <h1 class="text-4xl md:text-5xl font-bold neon-text">CyberSec CTF 2025</h1>
+    <p class="text-lg mt-2 text-gray-300">Kır, Çöz, Hakim Ol!</p>
+  </header>
+
+  <main class="max-w-4xl mx-auto">
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div class="card p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+        <h2 class="text-xl font-semibold">Challenge 1 - Temel Görev</h2>
+        <p class="text-sm text-gray-400 mt-2">Siber güvenlik temellerini test et.</p>
+        <a href="templates/challenge.html" class="text-blue-400 hover:text-blue-300 mt-2 inline-block">Başla</a>
+      </div>
+      <div class="card p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+        <h2 class="text-xl font-semibold">Challenge 2 - Çoklu Görevler</h2>
+        <p class="text-sm text-gray-400 mt-2">Birden fazla aşamayı çöz.</p>
+        <a href="templates/challenges.html" class="text-blue-400 hover:text-blue-300 mt-2 inline-block">Başla</a>
+      </div>
+      <div class="card p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+        <h2 class="text-xl font-semibold">Challenge 3 - CyberChef Şifreleme</h2>
+        <p class="text-sm text-gray-400 mt-2">Şifreleme becerilerini göster.</p>
+        <a href="static/vendor/cyberchef/cyberchef.html" class="text-blue-400 hover:text-blue-300 mt-2 inline-block">Başla</a>
+      </div>
+    </section>
+
+    <section class="mt-8">
+      <h2 class="text-2xl font-bold neon-text mb-4">Flag Gönder</h2>
+      <div class="card p-4 rounded-lg">
+        <input type="text" id="flagInput" placeholder="Flag'i gir..." class="w-full p-2 mb-2 bg-gray-800 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button onclick="submitFlag()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">Gönder</button>
+        <p id="result" class="mt-2 text-green-400"></p>
+      </div>
+    </section>
+
+    <section class="mt-8">
+      <h2 class="text-2xl font-bold neon-text mb-4">Skorboard</h2>
+      <div class="card p-4 rounded-lg">
+        <ul id="scoreboard" class="list-disc pl-5">
+          <li>Kullanıcı1 - 100 Puan</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="static/js/helpers.min.js"></script>
+  <script>
+    function submitFlag() {
+      let flag = document.getElementById("flagInput").value;
+      let flags = {
+        "flag{challenge1_2025}": 100,
+        "flag{challenge2_2025}": 200,
+        "flag{cyberchef_2025}": 300
+      };
+      if (flags[flag]) {
+        document.getElementById("result").innerHTML = "Doğru! " + flags[flag] + " puan kazandın!";
+        let name = prompt("Adın nedir?") || "Anonim";
+        document.getElementById("scoreboard").innerHTML += `<li>${name} - ${flags[flag]} Puan</li>`;
+      } else {
+        document.getElementById("result").innerHTML = "Yanlış flag, tekrar dene!";
+      }
+    }
+  </script>
+</body>
+</html>
